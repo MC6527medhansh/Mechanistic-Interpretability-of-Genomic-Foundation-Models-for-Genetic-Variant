@@ -1,0 +1,29 @@
+{
+  "attention_mass": {
+    "mann_whitney_u": 20000.0,
+    "p_value": 1.0,
+    "cohens_d": 0.0,
+    "pathogenic_mean": 0.0,
+    "benign_mean": 0.0,
+    "pathogenic_std": 0.0,
+    "benign_std": 0.0
+  },
+  "entropy": {
+    "mann_whitney_u": 20000.0,
+    "p_value": 1.0,
+    "cohens_d": 0.0,
+    "pathogenic_mean": 6.238325595855713,
+    "benign_mean": 6.238325595855713,
+    "pathogenic_std": 4.76837158203125e-07,
+    "benign_std": 4.76837158203125e-07
+  },
+  "peak_attention": {
+    "mann_whitney_u": 20000.0,
+    "p_value": 1.0,
+    "cohens_d": 0.0,
+    "pathogenic_mean": 0.0,
+    "benign_mean": 0.0,
+    "pathogenic_std": 0.0,
+    "benign_std": 0.0
+  }
+}

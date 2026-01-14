@@ -1,100 +1,145 @@
 # Genomic Interpretability: Nucleotide Transformer v2 on ClinVar
 
-**Author:** Medhansh Choubey
+**Author:** Medhansh Choubey  
 **Date:** January 2026
 
 ## Project Overview
-This repository contains a reproducible pipeline for the mechanistic interpretability of genomic foundation models. We fine-tune the **Nucleotide Transformer v2-50M** to classify genetic variants (Pathogenic vs. Benign) and apply two interpretability techniques:
-1.  **Attention Analysis:** Visualizing where the model focuses within the DNA sequence to determine if it prioritizes the variant site.
-2.  **Activation Patching:** A causal analysis to identify which transformer layers drive the pathogenicity prediction by systematically swapping hidden states between pathogenic and benign sequences.
 
-## Repository Structure
-```text
-├── data/               # Raw and processed genomic data (gitignored)
-├── results/            # Generated figures and model checkpoints
-├── scripts/            # Utility scripts (downloaders)
-├── src/                # Source code
-│   ├── analysis/       # Interpretability scripts (attention, patching)
-│   ├── data/           # Preprocessing logic
-│   └── models/         # Training loop and model definition
-├── README.md           # Project documentation
-└── requirements.txt    # Python dependencies
+Mechanistic interpretability analysis of the **Nucleotide Transformer v2-50M** for genetic variant classification (Pathogenic vs. Benign). Implements two interpretability approaches:
 
-```
+1. **Attention Analysis:** Statistical comparison of attention patterns between pathogenic and benign variants.
+2. **Activation Patching:** Causal analysis identifying which layers drive pathogenicity predictions.
 
-## Setup & Installation
+## Requirements
 
-**1. Clone the repository**
+- Python 3.9+
+- 8GB+ RAM
+- GPU recommended (but not required)
+- ~35GB disk space for reference genome
+
+## Quick Start (Run Everything)
 
 ```bash
-git clone [https://github.com/medhanshchoubey/genomic-interpretability.git](https://github.com/medhanshchoubey/genomic-interpretability.git)
-cd genomic-interpretability
+bash run_all.sh
 
 ```
 
-**2. Install Dependencies**
-We recommend using a clean Conda environment (Python 3.9+).
+This single command will:
+
+1. Download data (ClinVar + hg38 reference)
+2. Preprocess variants
+3. Train the model (~1 hour on GPU)
+4. Run interpretability analyses
+5. Generate all figures in `results/figures/`
+
+## Manual Step-by-Step
+
+If you prefer to run steps individually:
+
+### 1. Setup
 
 ```bash
-pip install torch transformers datasets biopython pandas numpy scikit-learn matplotlib seaborn tqdm pyfaidx accelerate
+git clone [https://github.com/MC6527medhansh/Mechanistic-Interpretability-of-Genomic-Foundation-Models-for-Genetic-Variant.git](https://github.com/MC6527medhansh/Mechanistic-Interpretability-of-Genomic-Foundation-Models-for-Genetic-Variant.git)
+cd Mechanistic-Interpretability-of-Genomic-Foundation-Models-for-Genetic-Variant
+
+pip install -r requirements.txt
 
 ```
 
-## Reproduction Steps
-
-**Step 1: Download Data**
-This script fetches the ClinVar VCF and the hg38 reference genome from public sources.
+### 2. Download Data
 
 ```bash
 bash scripts/download_data.sh
 
 ```
 
-**Step 2: Preprocess Data**
-Parses the VCF, filters for SNPs, and extracts 512bp context windows around each variant.
+Downloads:
+
+* ClinVar VCF (~500MB compressed)
+* hg38 reference genome (~30GB compressed)
+
+### 3. Preprocess
 
 ```bash
 python src/data/preprocess.py
 
 ```
 
-**Step 3: Fine-Tune Model**
-Trains a linear classification head on the Nucleotide Transformer backbone.
 
-* **Runtime:** ~1 hour on MPS (Mac) or GPU.
-* **Optimization:** Uses downsampling (50k examples) and 1 epoch for efficiency.
+Output: `data/processed/{train,val,test}_set.csv`
+
+### 4. Train Model
 
 ```bash
 python src/models/train.py
 
 ```
 
-**Step 4: Run Interpretability Analysis**
-Generates the Attention Profile and Causal Patching figures in `results/figures/`.
+Output: `results/checkpoints/final_model_state.pt`
 
-* **Note:** We use `PYTHONPATH=.` to ensure module imports work correctly from the root directory.
+### 5. Run Interpretability
 
 ```bash
-# Generate Attention Plots (Figure 1)
-PYTHONPATH=. python src/analysis/attention.py
+python src/analysis/attention.py
+python src/analysis/patching.py
 
-# Generate Activation Patching Plots (Figure 2)
-PYTHONPATH=. python src/analysis/patching.py
+```
+
+Output: All figures in `results/figures/`
+
+## Repository Structure
+
+```
+├── data/
+│   ├── raw/              (ClinVar VCF, hg38 reference - gitignored)
+│   └── processed/        (Train/val/test CSVs)
+├── results/
+│   ├── figures/          (Generated plots)
+│   ├── tables/           (Numerical results as JSON/NPY)
+│   └── checkpoints/      (Model weights - gitignored)
+├── src/
+│   ├── data/
+│   │   └── preprocess.py
+│   ├── models/
+│   │   └── train.py
+│   └── analysis/
+│       ├── attention.py
+│       └── patching.py
+├── scripts/
+│   └── download_data.sh
+├── README.md
+├── requirements.txt
+└── run_all.sh
 
 ```
 
 ## Results
 
-The analysis generates two key figures in `results/figures/`:
+Key outputs in `results/figures/`:
 
-* `attention_profile.png`: Shows the average attention weight across the 512bp sequence. A spike at index 256 indicates the model is attending to the variant.
-* `patching_results.png`: Displays the causal effect of swapping hidden states at the variant position for each layer.
+* `attention_comparison.png` - Pathogenic vs Benign attention profiles
+* `patching_results.png` - Layer-wise causal effects
+
+## Computational Notes
+
+**CPU-only mode:** All scripts work on CPU but will be slower. Training may take 4-6 hours.
+
+**Memory:** Peak RAM usage ~8GB during preprocessing (loading hg38). Model inference ~4GB.
+
+**Disk:** Reference genome is large (~30GB compressed, ~35GB uncompressed). Can delete after preprocessing to save space.
 
 ## References
 
-* **Data:** ClinVar (NCBI).
-* **Model:** Dalla-Torre et al., "The Nucleotide Transformer: Building and Evaluating Robust Foundation Models for Human Genomics," 2023.
+* **Data:** [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/) (NCBI)
+* **Model:** Dalla-Torre et al., "The Nucleotide Transformer: Building and Evaluating Robust Foundation Models for Human Genomics," bioRxiv 2023
+* **Reference Genome:** GRCh38/hg38 from UCSC Genome Browser
+
+## Citation
+
+If you use this code, please cite:
 
 ```
+Choubey, M. (2026). Mechanistic Interpretability of Genomic Foundation Models 
+for Genetic Variants. GitHub repository.
 
 ```

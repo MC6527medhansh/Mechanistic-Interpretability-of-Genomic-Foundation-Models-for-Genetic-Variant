@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+
 import torch
 import pandas as pd
 import numpy as np
@@ -17,7 +21,7 @@ def run_patching():
     try:
         model.load_state_dict(torch.load("results/checkpoints/final_model_state.pt", map_location=device))
     except:
-        print("Could not load trained weights. Running with base weights (demo mode).")
+        print("Could not load trained weights. Running with base weights.")
 
     model.eval()
     
